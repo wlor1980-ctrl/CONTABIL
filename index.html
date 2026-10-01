@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M.M. GLOBAL - Assistente de Contabilidade e DP SP</title>
+    <style>
+        :root {
+            --primary-color: #2b5797;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-top: 0;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .topic-badge {
+            display: inline-block;
+            background: #e1ecf4;
+            color: #39739d;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            resize: vertical;
+            height: 100px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #1e3d6b;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .response-box {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+            min-height: 50px;
+            white-space: pre-wrap;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .error {
+            border-left-color: #d9534f;
+            background-color: #fdf7f7;
+            color: #b94a48;
+        }
+
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+
+        .status-monitor {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #777;
+            background: #eee;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>M.M. GLOBAL - Assistente Fiscal & Trabalhista</h1>
+    <div>
+        <span class="topic-badge">Contabilidade Federal</span>
+        <span class="topic-badge">DP - Estado de São Paulo</span>
+    </div>
+
+    <div class="form-group">
+        <label for="question">Digite sua pergunta regulatória:</label>
+        <textarea id="question" placeholder="Ex: Qual a alíquota de PIS/COFINS cumulativo ou regras de banco de horas em SP?"></textarea>
+    </div>
+
+    <button id="sendBtn" onclick="askGemini()">Enviar Pergunta</button>
+
+    <div id="status" class="status-monitor">Status: Pronto para envio.</div>
+    <div id="output" class="response-box" style="display: none;"></div>
+</div>
+
+<script>
+    // 🔑 ESCREVA SUA API KEY DO GEMINI AQUI DENTRO DAS ASPAS:
+    const GEMINI_API_KEY = "AQ.Ab8RN6KXNoSfFNaBrR1O5W6uaZYR9CkoWm1QqgGaOZ3GO52Ahg";
+
+    function logStatus(txt) {
+        document.getElementById('status').innerText = "Status: " + txt;
+    }
+
+    async function askGemini() {
+        const question = document.getElementById('question').value.trim();
+        const outputDiv = document.getElementById('output');
+        const sendBtn = document.getElementById('sendBtn');
+
+        if (!question) {
+            alert('Por favor, digite uma pergunta.');
+            return;
+        }
+
+        outputDiv.style.display = 'block';
+        outputDiv.className = 'response-box loading';
+        outputDiv.innerText = 'Processando...';
+        sendBtn.disabled = true;
+        logStatus('Conectando à API do Google...');
+
+        const systemInstructionText = "Você é um assistente especialista estrito em duas áreas: 1. Contabilidade Federal Brasileira. 2. Departamento Pessoal do Estado de São Paulo (SP). REGRA ABSOLUTA: Você só tem permissão para responder perguntas que pertençam diretamente a esses dois temas. Se o usuário fizer perguntas sobre qualquer outro assunto, você deve recusar educadamente com a seguinte mensagem padrão: 'Desculpe, mas meu conhecimento neste canal é limitado exclusivamente à Contabilidade Federal e ao Departamento Pessoal do Estado de São Paulo.' Se a pergunta for válida, responda com clareza técnica e cite as bases legais federais ou estaduais aplicáveis.";
+
+        try {
+            const url = `https://googleapis.com{GEMINI_API_KEY}`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: `${systemInstructionText}\n\nPergunta do usuário: ${question}` }]
+                }],
+                generationConfig: {
+                    temperature: 0.1
+                }
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            logStatus('Analisando dados recebidos...');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error?.message || 'A requisição falhou no servidor.');
+            }
+
+            if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                const replyText = data.candidates[0].content.parts[0].text;
+                outputDiv.className = 'response-box';
+                outputDiv.innerText = replyText;
+                logStatus('Pronto! Resposta gerada com sucesso.');
+            } else {
+                throw new Error('A estrutura de resposta retornada veio vazia.');
+            }
+
+        } catch (error) {
+            outputDiv.className = 'response-box error';
+            outputDiv.innerText = `Erro na API: ${error.message}`;
+            logStatus('Erro na execução.');
+        } finally {
+            sendBtn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
